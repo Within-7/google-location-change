@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const select = document.getElementById('uuleSelect');
   const saveButton = document.getElementById('saveButton');
 
-  // Populate the select element with options
+  // 填充选择元素
   for (const [location, uule] of Object.entries(uuleOptions)) {
     const option = document.createElement('option');
     option.value = uule;
@@ -12,24 +12,38 @@ document.addEventListener('DOMContentLoaded', function() {
     select.appendChild(option);
   }
 
-  // Load the saved uule value
+  // 加载保存的 uule 值
   chrome.storage.sync.get('uule', function(data) {
     if (data.uule) {
       select.value = data.uule;
     }
   });
 
+  // 当选择改变时立即更新
+  select.addEventListener('change', function() {
+    updateUule(select.value);
+  });
+
   saveButton.addEventListener('click', function() {
-    const selectedUule = select.value;
-    chrome.storage.sync.set({uule: selectedUule}, function() {
-      console.log('UULE saved: ' + selectedUule);
-      // 发送消息到活动标签页以更新 URL
-      chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-        chrome.tabs.sendMessage(tabs[0].id, {
-          action: "addUuleParameter", 
-          uule: selectedUule
-        });
-      });
-    });
+    updateUule(select.value);
+    window.close();
   });
 });
+
+function updateUule(selectedUule) {
+  chrome.storage.sync.set({uule: selectedUule}, function() {
+    console.log('UULE saved:', selectedUule);
+    // 更新当前标签页
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+      if (tabs[0]) {
+        chrome.tabs.sendMessage(tabs[0].id, {action: "checkAndUpdateUule", uule: selectedUule}, function(response) {
+          if (chrome.runtime.lastError) {
+            console.log(chrome.runtime.lastError.message);
+          } else if (response) {
+            console.log('Current tab updated:', response);
+          }
+        });
+      }
+    });
+  });
+}

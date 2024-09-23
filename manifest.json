@@ -4,11 +4,12 @@
   "version": "1.0",
   "description": "Adds a uule parameter to Google search URLs for location simulation",
   "permissions": [
-    "activeTab",
-    "storage"
+    "storage",
+    "tabs",
+    "webNavigation"
   ],
   "host_permissions": [
-    "*://www.google.com/*"
+    "https://www.google.com/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -18,8 +19,9 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://www.google.com/*"],
-      "js": ["content.js"]
+      "matches": ["https://www.google.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
     }
   ]
 }
